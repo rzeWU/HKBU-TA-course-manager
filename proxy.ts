@@ -11,10 +11,8 @@ export function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/admin")) {
     const authCookie = request.cookies.get("admin_auth")?.value;
-    // Read password at runtime
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
 
-    if (authCookie !== expectedPassword) {
+    if (authCookie !== "1") {
       const loginUrl = new URL("/admin/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
