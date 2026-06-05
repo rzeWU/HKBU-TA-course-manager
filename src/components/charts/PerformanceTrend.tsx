@@ -84,10 +84,6 @@ export default function PerformanceTrend({
     lookup[d.yearLabel][d.semester] = d;
   }
 
-  const selectedKey = selectedPoint
-    ? `${selectedPoint.yearLabel}|${selectedPoint.semester}`
-    : null;
-
   const datasets = semesters.map((sem) => {
     const colors =
       SEMESTER_COLORS[sem] ||
@@ -248,48 +244,6 @@ export default function PerformanceTrend({
           data={{ labels: yearLabels, datasets }}
           options={options}
         />
-      </div>
-      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
-        {semesters.map((sem) => {
-          const colors =
-            SEMESTER_COLORS[sem] || SEMESTER_COLORS["Semester 1"];
-          return (
-            <div key={sem} className="flex items-center gap-1.5">
-              <span
-                className="inline-block w-3 h-3 rounded-full"
-                style={{ backgroundColor: colors.border }}
-              />
-              <span className="font-medium">{sem}:</span>
-              {yearLabels.map((y) => {
-                const p = lookup[y]?.[sem];
-                if (!p) return null;
-                const isSelected =
-                  selectedPoint &&
-                  selectedPoint.yearLabel === y &&
-                  selectedPoint.semester === sem;
-                return (
-                  <span
-                    key={y}
-                    className={`cursor-pointer hover:underline ${
-                      isSelected
-                        ? "text-blue-700 font-semibold"
-                        : "text-gray-400"
-                    }`}
-                    onClick={() => {
-                      if (isSelected) {
-                        onSelect(null);
-                      } else if (p) {
-                        onSelect(p);
-                      }
-                    }}
-                  >
-                    {y}: {metric === "mean" ? p.meanScore.toFixed(1) : p.medianScore.toFixed(1)}
-                  </span>
-                );
-              })}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
