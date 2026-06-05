@@ -36,6 +36,7 @@ interface FileRecord {
   type: string;
   academicYear: string;
   semester: string;
+  fileKind: string;
   fileUrl: string;
   fileSize: number;
 }
@@ -131,6 +132,8 @@ export default function CourseDetailPage({
       setDistributionData(merged);
     });
   }, [course, code]);
+
+  const [selectedFileYear, setSelectedFileYear] = useState<string | null>(null);
 
   const handleSelect = useCallback(
     (point: AssessmentPoint | null) => {
@@ -317,51 +320,133 @@ export default function CourseDetailPage({
 
       {/* FILES TAB */}
       {tab === "files" && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {assessmentTypes.map((type) => {
-            const files = filesByType[type] || [];
-            return (
-              <div
-                key={type}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden"
-              >
-                <div className="bg-gray-50 px-4 py-3 font-medium text-gray-700">
-                  {type}
+            const typeFiles = filesByType[type] || [];
+            const years = [
+              ...new Set(typeFiles.map((f) => f.academicYear)),
+            ].sort().reverse();
+            const kinds = [
+              ...new Set(typeFiles.map((f) => f.fileKind)),
+            ].sort();
+
+            if (years.length === 0) {
+              return (
+                <div
+                  key={type}
+                  className="bg-white border rounded-xl p-6 text-center text-gray-400 text-sm"
+                >
+                  <span className="font-medium text-gray-600">{type}</span>
+                  <p className="mt-1">No files uploaded</p>
                 </div>
-                {files.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-gray-400 text-sm">
-                    No files uploaded
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {files.map((f) => (
-                      <div
-                        key={f.id}
-                        className="px-4 py-3 flex items-center justify-between"
+              );
+            }
+
+            const activeYear =
+              years.includes(selectedFileYear || "")
+                ? selectedFileYear
+                : years[0];
+
+            const yearFiles = typeFiles.filter(
+              (f) => f.academicYear === activeYear
+            );
+
+            return (
+              <div key={type}>
+                <div className="flex items-center gap-3 mb-3">
+                  <h3 className="font-semibold text-gray-800">{type}</h3>
+                  <div className="flex gap-1">
+                    {years.map((y) => (
+                      <button
+                        key={y}
+                        onClick={() => setSelectedFileYear(y)}
+                        className={`px-3 py-1 text-xs rounded-full transition ${
+                          activeYear === y
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
                       >
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">
-                            {f.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {f.academicYear} · {f.semester}
-                          </p>
-                        </div>
-                        <a
-                          href={f.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                        >
-                          Download
-                        </a>
-                      </div>
+                        {y.split("-")[0]}
+                      </button>
                     ))}
+                  </div>
+                </div>
+
+                {kinds.length === 0 ? (
+                  <div className="text-gray-400 text-sm">No files</div>
+                ) : (
+                  <div className="bg-white border rounded-xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left px-4 py-2.5 font-medium text-gray-600 w-28">
+                            Semester
+                          </th>
+                          {kinds.map((k) => (
+                            <th
+                              key={k}
+                              className="text-left px-4 py-2.5 font-medium text-gray-600"
+                            >
+                              {k}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {["Semester 1", "Semester 2"].map((sem) => (
+                          <tr key={sem} className="border-b last:border-0">
+                            <td className="px-4 py-3 font-medium text-gray-700">
+                              {sem.replace("Semester ", "S")}
+                            </td>
+                            {kinds.map((kind) => {
+                              const file = yearFiles.find(
+                                (f) =>
+                                  f.semester === sem && f.fileKind === kind
+                              );
+                              return (
+                                <td key={kind} className="px-4 py-3">
+                                  {file ? (
+                                    <a
+                                      href={file.fileUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium"
+                                    >
+                                      <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                      </svg>
+                                      Download
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-300 text-xs">
+                                      —
+                                    </span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
             );
           })}
+          {assessmentTypes.length === 0 && (
+            <div className="text-center py-20 text-gray-400">No courses</div>
+          )}
         </div>
       )}
 

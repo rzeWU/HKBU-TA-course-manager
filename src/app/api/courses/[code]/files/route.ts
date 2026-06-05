@@ -22,7 +22,7 @@ export async function POST(
 
   try {
     const body = await request.json();
-    const { name, type, academicYear, semester, fileUrl, fileSize } = body;
+    const { name, type, academicYear, semester, fileKind, fileUrl, fileSize } = body;
 
     if (!name || !type || !academicYear || !semester || !fileUrl) {
       return NextResponse.json(
@@ -48,6 +48,7 @@ export async function POST(
         type,
         academicYear,
         semester,
+        fileKind: fileKind || "Other",
         fileUrl,
         fileSize: fileSize || 0,
       },

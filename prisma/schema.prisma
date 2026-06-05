@@ -85,9 +85,8 @@ model CourseFile {
   type         String
   academicYear String
   semester     String
+  fileKind     String   @default("Other")
   fileUrl      String
   fileSize     Int
   createdAt    DateTime @default(now())
-
-  @@unique([courseId, type, academicYear, semester])
 }
