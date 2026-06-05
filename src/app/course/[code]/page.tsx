@@ -85,7 +85,7 @@ export default function CourseDetailPage({
 
   // Interactive state
   const [metric, setMetric] = useState<Metric>("mean");
-  const [hoveredPoint, setHoveredPoint] = useState<AssessmentPoint | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<AssessmentPoint | null>(null);
   const [distributionData, setDistributionData] = useState<
     Record<string, number[]>
   >({});
@@ -132,9 +132,9 @@ export default function CourseDetailPage({
     });
   }, [course, code]);
 
-  const handleHover = useCallback(
-    (type: string) => (point: AssessmentPoint | null) => {
-      setHoveredPoint(point);
+  const handleSelect = useCallback(
+    (point: AssessmentPoint | null) => {
+      setSelectedPoint(point);
     },
     []
   );
@@ -275,32 +275,39 @@ export default function CourseDetailPage({
               </div>
 
               {assessmentTypes.map((type) => {
-                const hoverKey =
-                  hoveredPoint && hoveredPoint.type === type
-                    ? `${type}||${hoveredPoint.yearLabel} | ${hoveredPoint.semester}`
+                const typeKey =
+                  selectedPoint && selectedPoint.type === type
+                    ? `${type}||${selectedPoint.yearLabel} | ${selectedPoint.semester}`
                     : null;
                 const typeDistData = distributionData || {};
-                const hoverScores = hoverKey ? typeDistData[hoverKey] : null;
+                const distScores = typeKey ? typeDistData[typeKey] : null;
 
                 return (
-                  <div key={type} className="space-y-4">
+                  <div
+                    key={type}
+                    className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4"
+                  >
                     <PerformanceTrend
                       title={type}
                       data={chartDataByType[type] || []}
                       metric={metric}
-                      onHover={handleHover(type)}
+                      selectedPoint={
+                        selectedPoint && selectedPoint.type === type
+                          ? selectedPoint
+                          : null
+                      }
+                      onSelect={handleSelect}
                     />
                     <ScoreDistribution
-                      title={`Score Distribution`}
-                      scores={hoverScores ?? null}
+                      scores={distScores ?? null}
                       selectedPoint={
-                        hoveredPoint && hoveredPoint.type === type
+                        selectedPoint && selectedPoint.type === type
                           ? {
-                              yearLabel: hoveredPoint.yearLabel,
-                              semester: hoveredPoint.semester,
-                              meanScore: hoveredPoint.meanScore,
-                              medianScore: hoveredPoint.medianScore,
-                              studentCount: hoveredPoint.studentCount,
+                              yearLabel: selectedPoint.yearLabel,
+                              semester: selectedPoint.semester,
+                              meanScore: selectedPoint.meanScore,
+                              medianScore: selectedPoint.medianScore,
+                              studentCount: selectedPoint.studentCount,
                             }
                           : null
                       }
