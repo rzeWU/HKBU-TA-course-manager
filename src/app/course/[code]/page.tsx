@@ -82,7 +82,7 @@ export default function CourseDetailPage({
   const [error, setError] = useState("");
 
   // Interactive state
-  const [metric, setMetric] = useState<Metric>("mean");
+  const metric: Metric = "mean";
   const [selectedPoint, setSelectedPoint] = useState<AssessmentPoint | null>(null);
   const [distributionData, setDistributionData] = useState<
     Record<string, number[]>
@@ -259,33 +259,6 @@ export default function CourseDetailPage({
             </div>
           ) : (
             <>
-              {/* Metric toggle */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600">
-                  Show:
-                </span>
-                <button
-                  onClick={() => setMetric("mean")}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                    metric === "mean"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white border border-gray-300 text-gray-600"
-                  }`}
-                >
-                  Mean (μ)
-                </button>
-                <button
-                  onClick={() => setMetric("median")}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                    metric === "median"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white border border-gray-300 text-gray-600"
-                  }`}
-                >
-                  Median (m)
-                </button>
-              </div>
-
               {assessmentTypes.map((type) => {
                 const typeKey =
                   selectedPoint && selectedPoint.type === type
