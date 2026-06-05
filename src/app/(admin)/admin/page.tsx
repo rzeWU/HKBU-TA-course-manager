@@ -1,14 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-
-const ASSESSMENT_ORDER = ["Assignment 1", "Assignment 2", "Assignment 3", "Midterm", "Final"];
-const ABBREV: Record<string, string> = {
-  "Assignment 1": "A1",
-  "Assignment 2": "A2",
-  "Assignment 3": "A3",
-  Midterm: "Mid",
-  Final: "Fin",
-};
+import { ASSESSMENT_ORDER, ASSESSMENT_ABBREV } from "@/lib/constants";
 
 export default async function AdminDashboard() {
   const courses = await prisma.course.findMany({
@@ -50,10 +42,10 @@ export default async function AdminDashboard() {
           const years = course.academicYears;
           const allAssessmentTypes = [
             ...new Set(years.flatMap((y) => y.assessments.map((a) => a.type))),
-          ].sort((a, b) => ASSESSMENT_ORDER.indexOf(a) - ASSESSMENT_ORDER.indexOf(b));
+          ].sort((a, b) => (ASSESSMENT_ORDER[a] ?? 99) - (ASSESSMENT_ORDER[b] ?? 99));
 
           if (allAssessmentTypes.length === 0) {
-            ASSESSMENT_ORDER.forEach((t) => {
+            Object.keys(ASSESSMENT_ORDER).forEach((t) => {
               if (!allAssessmentTypes.includes(t)) allAssessmentTypes.push(t);
             });
           }
@@ -116,7 +108,7 @@ export default async function AdminDashboard() {
                           <th className="text-left pr-3 py-1 font-medium">Year</th>
                           {allAssessmentTypes.map((t) => (
                             <th key={t} className="text-center px-2 py-1 font-medium">
-                              {ABBREV[t] || t}
+                              {ASSESSMENT_ABBREV[t] || t}
                             </th>
                           ))}
                         </tr>

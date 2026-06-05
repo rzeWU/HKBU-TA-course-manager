@@ -2,15 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import { ASSESSMENT_TYPES, FILE_KINDS, SEMESTERS } from "@/lib/constants";
 
 const COURSES = ["ECON7880", "ECON3105"];
-const ASSESSMENT_TYPES = [
-  "Assignment 1", "Assignment 2", "Assignment 3", "Midterm", "Final",
-];
-const FILE_KINDS = [
-  "Criteria", "Question Paper", "Grade Sheet", "Solution", "Other",
-];
-const SEMESTERS = ["Semester 1", "Semester 2"];
 
 interface FileRecord {
   id: string;
@@ -30,7 +24,7 @@ export default function AdminFilesPage() {
   const [loading, setLoading] = useState(false);
   const [yearLabel, setYearLabel] = useState("2025-2026");
   const [semester, setSemester] = useState(SEMESTERS[0]);
-  const [type, setType] = useState(ASSESSMENT_TYPES[0]);
+  const [type, setType] = useState<string>(ASSESSMENT_TYPES[0]);
   const [fileKind, setFileKind] = useState(FILE_KINDS[0]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");

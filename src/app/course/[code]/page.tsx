@@ -5,6 +5,7 @@ import { use } from "react";
 import ReactMarkdown from "react-markdown";
 import PerformanceTrend from "@/components/charts/PerformanceTrend";
 import ScoreDistribution from "@/components/charts/ScoreDistribution";
+import { ASSESSMENT_ORDER, FILE_KINDS } from "@/lib/constants";
 
 interface Assessment {
   type: string;
@@ -62,13 +63,9 @@ interface AssessmentPoint {
   totalPoints: number;
 }
 
-const ASSESSMENT_ORDER = [
-  "Assignment 1",
-  "Assignment 2",
-  "Assignment 3",
-  "Midterm",
-  "Final",
-];
+function getAssessmentOrder(type: string): number {
+  return ASSESSMENT_ORDER[type] ?? Object.keys(ASSESSMENT_ORDER).length + type.length;
+}
 
 type Tab = "trends" | "files" | "notes";
 type Metric = "mean" | "median";
@@ -174,15 +171,15 @@ export default function CourseDetailPage({
       course.academicYears.flatMap((y) => y.assessments.map((a) => a.type))
     ),
   ].sort(
-    (a, b) => ASSESSMENT_ORDER.indexOf(a) - ASSESSMENT_ORDER.indexOf(b)
+    (a, b) => getAssessmentOrder(a) - getAssessmentOrder(b)
   );
 
   // Available academic years from course data (for file tab year selector)
   const courseYears = [
     ...new Set(course.academicYears.map((y) => y.yearLabel)),
   ].sort().reverse();
-  // Fixed file kinds for table columns
-  const ALL_FILE_KINDS = ["Criteria", "Question Paper", "Grade Sheet", "Solution", "Other"];
+  // Use shared file kind constants
+  const ALL_FILE_KINDS = FILE_KINDS;
 
   const chartDataByType: Record<string, AssessmentPoint[]> = {};
   for (const type of assessmentTypes) {

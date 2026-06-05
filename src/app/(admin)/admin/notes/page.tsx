@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { ASSESSMENT_TYPES } from "@/lib/constants";
 
 const COURSES = ["ECON7880", "ECON3105"];
-const ASSESSMENT_TYPES = [
-  "Assignment 1", "Assignment 2", "Assignment 3", "Midterm", "Final",
-];
 
 interface NoteRecord {
   id: string;
@@ -20,7 +18,7 @@ export default function AdminNotesPage() {
   const [course, setCourse] = useState(COURSES[0]);
   const [notes, setNotes] = useState<NoteRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [assessmentType, setAssessmentType] = useState(ASSESSMENT_TYPES[0]);
+  const [assessmentType, setAssessmentType] = useState<string>(ASSESSMENT_TYPES[0]);
   const [academicYear, setAcademicYear] = useState("2025-2026");
   const [content, setContent] = useState("");
   const [message, setMessage] = useState("");

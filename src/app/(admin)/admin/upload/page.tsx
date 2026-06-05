@@ -5,16 +5,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { parseOdsFile } from "@/lib/ods-parser";
 import type { ParsedOdsData } from "@/lib/types";
-
-const ASSESSMENT_TYPES = [
-  "Assignment 1",
-  "Assignment 2",
-  "Assignment 3",
-  "Midterm",
-  "Final",
-];
-
-const SEMESTERS = ["Semester 1", "Semester 2"];
+import { ASSESSMENT_TYPES, SEMESTERS } from "@/lib/constants";
 
 const COURSES = ["ECON7880", "ECON3105"];
 
@@ -22,7 +13,7 @@ export default function AdminUploadPage() {
   const [course, setCourse] = useState(COURSES[0]);
   const [yearLabel, setYearLabel] = useState("2025-2026");
   const [semester, setSemester] = useState(SEMESTERS[0]);
-  const [type, setType] = useState(ASSESSMENT_TYPES[0]);
+  const [type, setType] = useState<string>(ASSESSMENT_TYPES[0]);
   const [parsedData, setParsedData] = useState<ParsedOdsData | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -151,17 +142,19 @@ export default function AdminUploadPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Assessment Type
           </label>
-          <select
+          <input
+            type="text"
             value={type}
             onChange={(e) => setType(e.target.value)}
+            list="assessment-types"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          >
+            placeholder="e.g. Assignment 1"
+          />
+          <datalist id="assessment-types">
             {ASSESSMENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
+              <option key={t} value={t} />
             ))}
-          </select>
+          </datalist>
         </div>
       </div>
 
