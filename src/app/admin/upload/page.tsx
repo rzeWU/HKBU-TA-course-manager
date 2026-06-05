@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { parseOdsFile } from "@/lib/ods-parser";
@@ -93,7 +94,12 @@ export default function AdminUploadPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-8">Upload Grade Data</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <Link href="/admin" className="text-gray-400 hover:text-gray-600 transition">
+          ← Back
+        </Link>
+        <h1 className="text-2xl font-bold">Upload Grade Data</h1>
+      </div>
 
       {/* Selectors */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 
+const ASSESSMENT_ORDER = ["Assignment 1", "Assignment 2", "Assignment 3", "Midterm", "Final"];
+const ABBREV: Record<string, string> = {
+  "Assignment 1": "A1",
+  "Assignment 2": "A2",
+  "Assignment 3": "A3",
+  Midterm: "Mid",
+  Final: "Fin",
+};
+
 export default async function AdminDashboard() {
   const courses = await prisma.course.findMany({
     include: {
       academicYears: {
-        include: { assessments: { select: { type: true, updatedAt: true } } },
+        include: { assessments: { select: { type: true } } },
+        orderBy: { yearLabel: "asc" },
       },
     },
     orderBy: { code: "asc" },
@@ -16,80 +26,140 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
 
       <div className="grid gap-4 md:grid-cols-3 mb-10">
-        <Link
-          href="/admin/upload"
-          className="p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition"
-        >
-          <h3 className="font-semibold text-lg mb-1">Upload Grades</h3>
-          <p className="text-sm text-gray-500">
-            Parse .ods grade files and import data
-          </p>
+        <Link href="/admin/upload" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-base mb-1">Upload Grades</h3>
+          <p className="text-sm text-gray-500">Parse .ods files and import data</p>
         </Link>
-        <Link
-          href="/admin/files"
-          className="p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition"
-        >
-          <h3 className="font-semibold text-lg mb-1">Manage Files</h3>
-          <p className="text-sm text-gray-500">
-            Upload assignment/exam PDFs for download
-          </p>
+        <Link href="/admin/files" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-base mb-1">Manage Files</h3>
+          <p className="text-sm text-gray-500">Upload assignment/exam files</p>
         </Link>
-        <Link
-          href="/admin/notes"
-          className="p-6 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition"
-        >
-          <h3 className="font-semibold text-lg mb-1">Manage Notes</h3>
-          <p className="text-sm text-gray-500">
-            Document changes and adjustments
-          </p>
+        <Link href="/admin/notes" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-base mb-1">Manage Notes</h3>
+          <p className="text-sm text-gray-500">Document changes</p>
         </Link>
       </div>
 
       <h2 className="text-lg font-semibold mb-4">Courses</h2>
-      <div className="overflow-x-auto bg-white rounded-xl border border-gray-200">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium">Code</th>
-              <th className="text-left px-4 py-3 font-medium">Name</th>
-              <th className="text-left px-4 py-3 font-medium">Academic Years</th>
-              <th className="text-left px-4 py-3 font-medium">Assessments</th>
-              <th className="text-left px-4 py-3 font-medium">Last Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((course) => (
-              <tr key={course.id} className="border-b last:border-0">
-                <td className="px-4 py-3 font-medium">{course.code}</td>
-                <td className="px-4 py-3 text-gray-600">{course.name}</td>
-                <td className="px-4 py-3 text-gray-600">
-                  {course.academicYears
-                    .map((y) => `${y.yearLabel} ${y.semester}`)
-                    .join(", ") || "—"}
-                </td>
-                <td className="px-4 py-3 text-gray-600">
-                  {[
-                    ...new Set(
-                      course.academicYears.flatMap((y) =>
-                        y.assessments.map((a) => a.type)
-                      )
-                    ),
-                  ].join(", ") || "—"}
-                </td>
-                <td className="px-4 py-3 text-gray-500">
-                  {course.updatedAt.toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-            {courses.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                  No courses yet. Create courses via the API or seed script.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="space-y-4">
+        {courses.map((course) => {
+          const years = course.academicYears;
+          const allAssessmentTypes = [
+            ...new Set(years.flatMap((y) => y.assessments.map((a) => a.type))),
+          ].sort((a, b) => ASSESSMENT_ORDER.indexOf(a) - ASSESSMENT_ORDER.indexOf(b));
+
+          if (allAssessmentTypes.length === 0) {
+            ASSESSMENT_ORDER.forEach((t) => {
+              if (!allAssessmentTypes.includes(t)) allAssessmentTypes.push(t);
+            });
+          }
+
+          return (
+            <div key={course.id} className="bg-white border rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{course.code}</h3>
+                  <p className="text-xs text-gray-500">{course.name}</p>
+                </div>
+                <Link
+                  href={`/course/${course.code}`}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  View course →
+                </Link>
+              </div>
+
+              {/* Academic Years */}
+              <div className="mb-3">
+                <span className="text-xs font-medium text-gray-500 mr-2">{years.length} years:</span>
+                {years.length === 0 ? (
+                  <span className="text-xs text-gray-400">—</span>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {years.map((y) => {
+                      const sems = [
+                        ...new Set(y.assessments.map(() => y.semester)),
+                      ];
+                      // Get semesters for this year
+                      const hasS1 = years.some(
+                        (ay) => ay.yearLabel === y.yearLabel && ay.semester === "Semester 1"
+                      );
+                      const hasS2 = years.some(
+                        (ay) => ay.yearLabel === y.yearLabel && ay.semester === "Semester 2"
+                      );
+                      return (
+                        <span key={y.id} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          <span className="font-medium">{y.yearLabel.split("-")[0]}</span>
+                          <span className="text-gray-500 ml-1">
+                            S1{hasS2 ? " S2" : ""}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Assessments per year */}
+              <div>
+                <span className="text-xs font-medium text-gray-500 mr-2">Assessments:</span>
+                {years.length === 0 ? (
+                  <span className="text-xs text-gray-400">—</span>
+                ) : (
+                  <div className="overflow-x-auto mt-1">
+                    <table className="text-xs w-full">
+                      <thead>
+                        <tr className="text-gray-500">
+                          <th className="text-left pr-3 py-1 font-medium">Year</th>
+                          {allAssessmentTypes.map((t) => (
+                            <th key={t} className="text-center px-2 py-1 font-medium">
+                              {ABBREV[t] || t}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {years.map((y) => {
+                          const yearTypes = y.assessments.map((a) => a.type);
+                          return (
+                            <tr key={y.id} className="border-t border-gray-100">
+                              <td className="pr-3 py-1 text-gray-600">
+                                {y.yearLabel.split("-")[0]} {y.semester.replace("Semester ", "S")}
+                              </td>
+                              {allAssessmentTypes.map((t) => {
+                                const has = yearTypes.includes(t);
+                                return (
+                                  <td key={t} className="text-center px-2 py-1">
+                                    <span
+                                      className={
+                                        has
+                                          ? "text-green-600 font-medium"
+                                          : "text-gray-300"
+                                      }
+                                    >
+                                      {has ? "✓" : "—"}
+                                    </span>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 text-right text-xs text-gray-400">
+                Updated {course.updatedAt.toLocaleDateString()}
+              </div>
+            </div>
+          );
+        })}
+        {courses.length === 0 && (
+          <div className="text-center py-12 text-gray-400">No courses yet.</div>
+        )}
       </div>
     </div>
   );

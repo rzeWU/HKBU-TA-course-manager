@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 const COURSES = ["ECON7880", "ECON3105"];
@@ -74,7 +75,10 @@ export default function AdminNotesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-8">Manage Notes</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <Link href="/admin" className="text-gray-400 hover:text-gray-600 transition">← Back</Link>
+        <h1 className="text-2xl font-bold">Manage Notes</h1>
+      </div>
 
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-1">
