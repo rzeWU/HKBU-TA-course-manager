@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { use } from "react";
 import ReactMarkdown from "react-markdown";
 import PerformanceTrend from "@/components/charts/PerformanceTrend";
+import ScoreDistribution from "@/components/charts/ScoreDistribution";
 
 interface Assessment {
   type: string;
@@ -48,6 +49,18 @@ interface CourseData {
   courseFiles: FileRecord[];
 }
 
+interface AssessmentPoint {
+  type: string;
+  yearLabel: string;
+  semester: string;
+  meanScore: number;
+  medianScore: number;
+  maxScore: number;
+  minScore: number;
+  studentCount: number;
+  totalPoints: number;
+}
+
 const ASSESSMENT_ORDER = [
   "Assignment 1",
   "Assignment 2",
@@ -57,6 +70,7 @@ const ASSESSMENT_ORDER = [
 ];
 
 type Tab = "trends" | "files" | "notes";
+type Metric = "mean" | "median";
 
 export default function CourseDetailPage({
   params,
@@ -69,6 +83,13 @@ export default function CourseDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Interactive state
+  const [metric, setMetric] = useState<Metric>("mean");
+  const [hoveredPoint, setHoveredPoint] = useState<AssessmentPoint | null>(null);
+  const [distributionData, setDistributionData] = useState<
+    Record<string, number[]>
+  >({});
+
   useEffect(() => {
     fetch(`/api/courses/${code}`)
       .then((r) => {
@@ -79,6 +100,44 @@ export default function CourseDetailPage({
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [code]);
+
+  // Fetch distribution data when course loads or assessment types are known
+  useEffect(() => {
+    if (!course) return;
+    const types = [
+      ...new Set(
+        course.academicYears.flatMap((y) => y.assessments.map((a) => a.type))
+      ),
+    ];
+
+    // Fetch distribution for all types, keyed by "type||yearLabel||semester"
+    Promise.all(
+      types.map((type) =>
+        fetch(`/api/courses/${code}/distribution?type=${encodeURIComponent(type)}`)
+          .then((r) => r.json())
+          .then((data: Record<string, number[]>) => {
+            const prefixed: Record<string, number[]> = {};
+            for (const [k, v] of Object.entries(data)) {
+              prefixed[`${type}||${k}`] = v;
+            }
+            return prefixed;
+          })
+      )
+    ).then((results) => {
+      const merged: Record<string, number[]> = {};
+      for (const d of results) {
+        Object.assign(merged, d);
+      }
+      setDistributionData(merged);
+    });
+  }, [course, code]);
+
+  const handleHover = useCallback(
+    (type: string) => (point: AssessmentPoint | null) => {
+      setHoveredPoint(point);
+    },
+    []
+  );
 
   if (loading) {
     return (
@@ -105,29 +164,26 @@ export default function CourseDetailPage({
     (a, b) => ASSESSMENT_ORDER.indexOf(a) - ASSESSMENT_ORDER.indexOf(b)
   );
 
-  const chartDataByType = Object.fromEntries(
-    assessmentTypes.map((type) => [
-      type,
-      course.academicYears
-        .filter((y) => y.assessments.some((a) => a.type === type))
-        .map((y) => {
-          const a = y.assessments.find((a) => a.type === type)!;
-          return {
-            type,
-            yearLabel: y.yearLabel,
-            semester: y.semester,
-            meanScore: a.meanScore,
-            medianScore: a.medianScore,
-            maxScore: a.maxScore,
-            minScore: a.minScore,
-            studentCount: a.studentCount,
-            totalPoints: a.totalPoints,
-          };
-        }),
-    ])
-  );
+  const chartDataByType: Record<string, AssessmentPoint[]> = {};
+  for (const type of assessmentTypes) {
+    chartDataByType[type] = course.academicYears
+      .filter((y) => y.assessments.some((a) => a.type === type))
+      .map((y) => {
+        const a = y.assessments.find((a) => a.type === type)!;
+        return {
+          type,
+          yearLabel: y.yearLabel,
+          semester: y.semester,
+          meanScore: a.meanScore,
+          medianScore: a.medianScore,
+          maxScore: a.maxScore,
+          minScore: a.minScore,
+          studentCount: a.studentCount,
+          totalPoints: a.totalPoints,
+        };
+      });
+  }
 
-  // Group files by type
   const filesByType = Object.fromEntries(
     assessmentTypes.map((type) => [
       type,
@@ -135,7 +191,6 @@ export default function CourseDetailPage({
     ])
   );
 
-  // Group notes by type + year
   const notesByTypeAndYear = Object.fromEntries(
     assessmentTypes.map((type) => [
       type,
@@ -152,12 +207,11 @@ export default function CourseDetailPage({
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{course.code}</h1>
-        <p className="text-gray-600 mt-1">
-          Academic years:{" "}
+        <p className="text-gray-600 text-sm mt-1">
           {course.academicYears
             .map((y) => `${y.yearLabel} ${y.semester}`)
             .join(" · ")}
@@ -183,7 +237,7 @@ export default function CourseDetailPage({
 
       {/* TRENDS TAB */}
       {tab === "trends" && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {assessmentTypes.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <p>No assessment data yet.</p>
@@ -192,13 +246,69 @@ export default function CourseDetailPage({
               </p>
             </div>
           ) : (
-            assessmentTypes.map((type) => (
-              <PerformanceTrend
-                key={type}
-                title={type}
-                data={chartDataByType[type] || []}
-              />
-            ))
+            <>
+              {/* Metric toggle */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-600">
+                  Show:
+                </span>
+                <button
+                  onClick={() => setMetric("mean")}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition ${
+                    metric === "mean"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white border border-gray-300 text-gray-600"
+                  }`}
+                >
+                  Mean (μ)
+                </button>
+                <button
+                  onClick={() => setMetric("median")}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition ${
+                    metric === "median"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white border border-gray-300 text-gray-600"
+                  }`}
+                >
+                  Median (m)
+                </button>
+              </div>
+
+              {assessmentTypes.map((type) => {
+                const hoverKey =
+                  hoveredPoint && hoveredPoint.type === type
+                    ? `${type}||${hoveredPoint.yearLabel} | ${hoveredPoint.semester}`
+                    : null;
+                const typeDistData = distributionData || {};
+                const hoverScores = hoverKey ? typeDistData[hoverKey] : null;
+
+                return (
+                  <div key={type} className="space-y-4">
+                    <PerformanceTrend
+                      title={type}
+                      data={chartDataByType[type] || []}
+                      metric={metric}
+                      onHover={handleHover(type)}
+                    />
+                    <ScoreDistribution
+                      title={`Score Distribution`}
+                      scores={hoverScores ?? null}
+                      selectedPoint={
+                        hoveredPoint && hoveredPoint.type === type
+                          ? {
+                              yearLabel: hoveredPoint.yearLabel,
+                              semester: hoveredPoint.semester,
+                              meanScore: hoveredPoint.meanScore,
+                              medianScore: hoveredPoint.medianScore,
+                              studentCount: hoveredPoint.studentCount,
+                            }
+                          : null
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
       )}
@@ -250,11 +360,6 @@ export default function CourseDetailPage({
               </div>
             );
           })}
-          {assessmentTypes.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <p>No course data available yet.</p>
-            </div>
-          )}
         </div>
       )}
 
@@ -297,11 +402,6 @@ export default function CourseDetailPage({
               </div>
             );
           })}
-          {assessmentTypes.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <p>No course data available yet.</p>
-            </div>
-          )}
         </div>
       )}
     </div>
