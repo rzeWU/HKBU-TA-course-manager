@@ -57,6 +57,15 @@ export default function AdminCoursesPage() {
     fetchCourses();
   };
 
+  const handleSwitchProgram = async (course: CourseRecord, newSlug: string) => {
+    await fetch("/api/courses", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: course.code, programSlug: newSlug }),
+    });
+    fetchCourses();
+  };
+
   const getProgramName = (slug: string) => PROGRAMS.find((p) => p.slug === slug)?.name || slug;
 
   return (
@@ -101,6 +110,7 @@ export default function AdminCoursesPage() {
               <th className="text-left px-4 py-2">Name</th>
               <th className="text-left px-4 py-2">Program</th>
               <th className="text-left px-4 py-2">Status</th>
+              <th className="text-left px-4 py-2">Switch</th>
               <th className="text-left px-4 py-2"></th>
             </tr>
           </thead>
@@ -116,6 +126,17 @@ export default function AdminCoursesPage() {
                   <span className={`text-xs px-2 py-0.5 rounded-full ${c.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                     {c.isActive ? "Active" : "Inactive"}
                   </span>
+                </td>
+                <td className="px-4 py-2">
+                  <select
+                    value={c.programSlug}
+                    onChange={(e) => handleSwitchProgram(c, e.target.value)}
+                    className="text-xs border rounded px-1.5 py-0.5"
+                  >
+                    {PROGRAMS.map((p) => (
+                      <option key={p.slug} value={p.slug}>{p.name}</option>
+                    ))}
+                  </select>
                 </td>
                 <td className="px-4 py-2">
                   <button onClick={() => handleToggleActive(c)} className="text-xs text-gray-500 hover:text-blue-600">

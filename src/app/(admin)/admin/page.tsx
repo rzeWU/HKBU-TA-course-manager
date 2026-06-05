@@ -75,33 +75,32 @@ export default async function AdminDashboard() {
 
               {/* Academic Years */}
               <div className="mb-3">
-                <span className="text-xs font-medium text-gray-500 mr-2">{years.length} years:</span>
-                {years.length === 0 ? (
-                  <span className="text-xs text-gray-400">—</span>
-                ) : (
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {years.map((y) => {
-                      const sems = [
-                        ...new Set(y.assessments.map(() => y.semester)),
-                      ];
-                      // Get semesters for this year
-                      const hasS1 = years.some(
-                        (ay) => ay.yearLabel === y.yearLabel && ay.semester === "Semester 1"
-                      );
-                      const hasS2 = years.some(
-                        (ay) => ay.yearLabel === y.yearLabel && ay.semester === "Semester 2"
-                      );
-                      return (
-                        <span key={y.id} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                          <span className="font-medium">{y.yearLabel.split("-")[0]}</span>
-                          <span className="text-gray-500 ml-1">
-                            S1{hasS2 ? " S2" : ""}
-                          </span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
+                {(() => {
+                const uniqueYears = [...new Set(years.map((y) => y.yearLabel))].sort();
+                return (
+                  <>
+                    <span className="text-xs font-medium text-gray-500 mr-2">{uniqueYears.length} years:</span>
+                    {uniqueYears.length === 0 ? (
+                      <span className="text-xs text-gray-400">—</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {uniqueYears.map((yl) => {
+                          const hasS1 = years.some((ay) => ay.yearLabel === yl && ay.semester === "Semester 1");
+                          const hasS2 = years.some((ay) => ay.yearLabel === yl && ay.semester === "Semester 2");
+                          return (
+                            <span key={yl} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                              <span className="font-medium">{yl.split("-")[0]}</span>
+                              <span className="text-gray-500 ml-1">
+                                S1{hasS2 ? " S2" : ""}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               </div>
 
               {/* Assessments per year */}
