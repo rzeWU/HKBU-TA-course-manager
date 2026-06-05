@@ -134,6 +134,7 @@ export default function CourseDetailPage({
   }, [course, code]);
 
   const [selectedFileYear, setSelectedFileYear] = useState<string | null>(null);
+  const [refetchKey, setRefetchKey] = useState(0);
 
   const handleSelect = useCallback(
     (point: AssessmentPoint | null) => {
@@ -141,6 +142,15 @@ export default function CourseDetailPage({
     },
     []
   );
+
+  // Re-fetch when switching tabs
+  useEffect(() => {
+    if (!course || tab !== "files") return;
+    fetch(`/api/courses/${code}`)
+      .then((r) => r.json())
+      .then((data) => setCourse(data))
+      .catch(() => {});
+  }, [tab, code]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -166,6 +176,13 @@ export default function CourseDetailPage({
   ].sort(
     (a, b) => ASSESSMENT_ORDER.indexOf(a) - ASSESSMENT_ORDER.indexOf(b)
   );
+
+  // Available academic years from course data (for file tab year selector)
+  const courseYears = [
+    ...new Set(course.academicYears.map((y) => y.yearLabel)),
+  ].sort().reverse();
+  // Fixed file kinds for table columns
+  const ALL_FILE_KINDS = ["Criteria", "Question Paper", "Grade Sheet", "Solution", "Other"];
 
   const chartDataByType: Record<string, AssessmentPoint[]> = {};
   for (const type of assessmentTypes) {
@@ -323,12 +340,7 @@ export default function CourseDetailPage({
         <div className="space-y-8">
           {assessmentTypes.map((type) => {
             const typeFiles = filesByType[type] || [];
-            const years = [
-              ...new Set(typeFiles.map((f) => f.academicYear)),
-            ].sort().reverse();
-            const kinds = [
-              ...new Set(typeFiles.map((f) => f.fileKind)),
-            ].sort();
+            const years = courseYears.length > 0 ? courseYears : [];
 
             if (years.length === 0) {
               return (
@@ -337,7 +349,7 @@ export default function CourseDetailPage({
                   className="bg-white border rounded-xl p-6 text-center text-gray-400 text-sm"
                 >
                   <span className="font-medium text-gray-600">{type}</span>
-                  <p className="mt-1">No files uploaded</p>
+                  <p className="mt-1">No academic years available</p>
                 </div>
               );
             }
@@ -372,75 +384,71 @@ export default function CourseDetailPage({
                   </div>
                 </div>
 
-                {kinds.length === 0 ? (
-                  <div className="text-gray-400 text-sm">No files</div>
-                ) : (
-                  <div className="bg-white border rounded-xl overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="text-left px-4 py-2.5 font-medium text-gray-600 w-28">
-                            Semester
+                <div className="bg-white border rounded-xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="text-left px-4 py-2.5 font-medium text-gray-600 w-28">
+                          Semester
+                        </th>
+                        {ALL_FILE_KINDS.map((k) => (
+                          <th
+                            key={k}
+                            className="text-left px-4 py-2.5 font-medium text-gray-600"
+                          >
+                            {k}
                           </th>
-                          {kinds.map((k) => (
-                            <th
-                              key={k}
-                              className="text-left px-4 py-2.5 font-medium text-gray-600"
-                            >
-                              {k}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {["Semester 1", "Semester 2"].map((sem) => (
-                          <tr key={sem} className="border-b last:border-0">
-                            <td className="px-4 py-3 font-medium text-gray-700">
-                              {sem.replace("Semester ", "S")}
-                            </td>
-                            {kinds.map((kind) => {
-                              const file = yearFiles.find(
-                                (f) =>
-                                  f.semester === sem && f.fileKind === kind
-                              );
-                              return (
-                                <td key={kind} className="px-4 py-3">
-                                  {file ? (
-                                    <a
-                                      href={file.fileUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium"
-                                    >
-                                      <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                        />
-                                      </svg>
-                                      Download
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-300 text-xs">
-                                      —
-                                    </span>
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {["Semester 1", "Semester 2"].map((sem) => (
+                        <tr key={sem} className="border-b last:border-0">
+                          <td className="px-4 py-3 font-medium text-gray-700">
+                            {sem.replace("Semester ", "S")}
+                          </td>
+                          {ALL_FILE_KINDS.map((kind) => {
+                            const file = yearFiles.find(
+                              (f) =>
+                                f.semester === sem && f.fileKind === kind
+                            );
+                            return (
+                              <td key={kind} className="px-4 py-3">
+                                {file ? (
+                                  <a
+                                    href={file.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      />
+                                    </svg>
+                                    Download
+                                  </a>
+                                ) : (
+                                  <span className="text-gray-300 text-xs">
+                                    —
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             );
           })}
