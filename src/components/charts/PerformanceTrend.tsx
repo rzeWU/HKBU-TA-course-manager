@@ -83,6 +83,8 @@ export default function PerformanceTrend({
 
   const semesters = [...new Set(data.map((d) => d.semester))].sort();
   const yearLabels = [...new Set(data.map((d) => d.yearLabel))].sort();
+  // Shorten "2023-2024" → "2023" for display
+  const displayYears = yearLabels.map((y) => y.split("-")[0]);
 
   const lookup: Record<string, Record<string, AssessmentPoint>> = {};
   for (const d of data) {
@@ -101,7 +103,7 @@ export default function PerformanceTrend({
     });
 
     return {
-      label: `${shortSem(sem)} ${metric === "mean" ? "μ" : "m"}`,
+      label: sem,
       data: values,
       borderColor: colors.border,
       backgroundColor: colors.bg,
@@ -189,7 +191,7 @@ export default function PerformanceTrend({
           displayColors: true,
           callbacks: {
             title: function (items: Array<{ label: string }>) {
-              return `📅 ${items[0].label}`;
+              return `${items[0].label}`;
             },
             label: function (context: TooltipItem<"line">) {
               const value = context.raw as number | null;
@@ -247,7 +249,7 @@ export default function PerformanceTrend({
       </div>
       <div className="h-64">
         <Line
-          data={{ labels: yearLabels, datasets }}
+          data={{ labels: displayYears, datasets }}
           options={options}
         />
       </div>
