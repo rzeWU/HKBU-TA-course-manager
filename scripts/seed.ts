@@ -1,10 +1,13 @@
 // Seed script: run with `npx tsx scripts/seed.ts`
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool } from "@neondatabase/serverless";
+import ws from "ws";
 
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  adapter: new PrismaNeon(pool),
 });
 
 async function main() {
