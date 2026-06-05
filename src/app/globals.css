@@ -3,15 +3,24 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-hkbu-navy: #1a365d;
+  --color-hkbu-gold: #c4922a;
+  --color-hkbu-light: #f0f4f8;
+  --color-hkbu-accent: #2b6cb0;
 }
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
+  --background: #f5f7fa;
+  --foreground: #1a202c;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.theme-hkbu {
+  --hkbu-blue: #1a365d;
+  --hkbu-gold: #c4922a;
 }
