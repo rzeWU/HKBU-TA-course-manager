@@ -46,18 +46,24 @@ interface Props {
   onSelect: (point: AssessmentPoint | null) => void;
 }
 
-const SEMESTER_COLORS: Record<string, { border: string; bg: string; selected: string }> = {
+const SEMESTER_COLORS: Record<string, { border: string; bg: string; selected: string; short: string }> = {
   "Semester 1": {
     border: "rgb(59, 130, 246)",
     bg: "rgba(59, 130, 246, 0.08)",
     selected: "rgb(30, 64, 175)",
+    short: "S1",
   },
   "Semester 2": {
     border: "rgb(16, 185, 129)",
     bg: "rgba(16, 185, 129, 0.08)",
     selected: "rgb(6, 95, 70)",
+    short: "S2",
   },
 };
+
+function shortSem(sem: string): string {
+  return SEMESTER_COLORS[sem]?.short ?? sem;
+}
 
 export default function PerformanceTrend({
   title,
@@ -95,7 +101,7 @@ export default function PerformanceTrend({
     });
 
     return {
-      label: `${sem} ${metric === "mean" ? "(μ)" : "(m)"}`,
+      label: `${shortSem(sem)} ${metric === "mean" ? "μ" : "m"}`,
       data: values,
       borderColor: colors.border,
       backgroundColor: colors.bg,

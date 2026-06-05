@@ -211,11 +211,6 @@ export default function CourseDetailPage({
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{course.code}</h1>
-        <p className="text-gray-600 text-sm mt-1">
-          {course.academicYears
-            .map((y) => `${y.yearLabel} ${y.semester}`)
-            .join(" · ")}
-        </p>
       </div>
 
       {/* Tabs */}
