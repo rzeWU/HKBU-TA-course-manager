@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Simple password-based admin protection
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
-    const authCookie = request.cookies.get("admin_auth")?.value;
+  // Allow login page and API to pass through
+  if (pathname === "/admin/login" || pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
 
-    if (authCookie !== ADMIN_PASSWORD) {
+  if (pathname.startsWith("/admin")) {
+    const authCookie = request.cookies.get("admin_auth")?.value;
+    // Read password at runtime
+    const expectedPassword = process.env.ADMIN_PASSWORD || "admin123";
+
+    if (authCookie !== expectedPassword) {
       const loginUrl = new URL("/admin/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -20,5 +24,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/admin/:path*",
+  matcher: [
+    "/admin",
+    "/admin/:path*",
+    "/api/auth/:path*",
+  ],
 };
