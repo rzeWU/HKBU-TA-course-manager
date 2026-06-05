@@ -11,6 +11,7 @@ model Course {
   id          String       @id @default(cuid())
   code        String       @unique
   name        String
+  programSlug String       @default("mscdabe")
   isActive    Boolean      @default(true)
   academicYears AcademicYear[]
   assessments  Assessment[]

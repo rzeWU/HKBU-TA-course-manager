@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { PROGRAMS, getProgramBySlug } from "@/lib/programs";
+import { getProgramBySlug } from "@/lib/programs";
 import { notFound } from "next/navigation";
 
 export default async function ProgramPage({
@@ -15,7 +15,7 @@ export default async function ProgramPage({
 
   const courses = await prisma.course.findMany({
     where: {
-      code: { in: program.courseCodes },
+      programSlug: slug,
       isActive: true,
     },
     include: {
@@ -41,21 +41,6 @@ export default async function ProgramPage({
             <h1 className="text-2xl font-bold text-hkbu-navy">{program.name}</h1>
             <p className="text-sm text-gray-500 mt-0.5">{program.fullName}</p>
           </div>
-        </div>
-        <div className="flex gap-2 mt-4 ml-4">
-          {PROGRAMS.map((p) => (
-            <Link
-              key={p.slug}
-              href={`/program/${p.slug}`}
-              className={`px-4 py-1.5 text-sm rounded-md transition font-medium ${
-                p.slug === slug
-                  ? "bg-hkbu-navy text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-hkbu-navy"
-              }`}
-            >
-              {p.name}
-            </Link>
-          ))}
         </div>
       </div>
 

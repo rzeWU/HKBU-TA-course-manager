@@ -14,19 +14,21 @@ async function main() {
   // Seed courses
   const econ7880 = await prisma.course.upsert({
     where: { code: "ECON7880" },
-    update: {},
+    update: { programSlug: "mscdabe" },
     create: {
       code: "ECON7880",
       name: "Big Data Analytics",
+      programSlug: "mscdabe",
     },
   });
 
   const econ3105 = await prisma.course.upsert({
     where: { code: "ECON3105" },
-    update: {},
+    update: { programSlug: "mscaecon" },
     create: {
       code: "ECON3105",
       name: "Applied Business Data Mining",
+      programSlug: "mscaecon",
     },
   });
 

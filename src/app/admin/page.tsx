@@ -25,14 +25,18 @@ export default async function AdminDashboard() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
 
-      <div className="grid gap-4 md:grid-cols-3 mb-10">
+      <div className="grid gap-4 md:grid-cols-4 mb-10">
         <Link href="/admin/upload" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
           <h3 className="font-semibold text-base mb-1">Upload Grades</h3>
-          <p className="text-sm text-gray-500">Parse .ods files and import data</p>
+          <p className="text-sm text-gray-500">Parse .ods files</p>
+        </Link>
+        <Link href="/admin/courses" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-base mb-1">Manage Courses</h3>
+          <p className="text-sm text-gray-500">Add/remove courses</p>
         </Link>
         <Link href="/admin/files" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
           <h3 className="font-semibold text-base mb-1">Manage Files</h3>
-          <p className="text-sm text-gray-500">Upload assignment/exam files</p>
+          <p className="text-sm text-gray-500">Upload exam files</p>
         </Link>
         <Link href="/admin/notes" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
           <h3 className="font-semibold text-base mb-1">Manage Notes</h3>

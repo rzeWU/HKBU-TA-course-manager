@@ -8,7 +8,7 @@ export default async function HomePage() {
     PROGRAMS.map(async (program) => {
       const courses = await prisma.course.findMany({
         where: {
-          code: { in: program.courseCodes },
+          programSlug: program.slug,
           isActive: true,
         },
         include: {
