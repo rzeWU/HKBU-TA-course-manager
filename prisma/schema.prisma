@@ -95,16 +95,29 @@ model CourseFile {
 }
 
 model TAManpower {
-  id           String   @id @default(cuid())
+  id           String              @id @default(cuid())
   title        String
   academicYear String
   semester     String
   fileUrl      String
   fileSize     Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  details      TAManpowerDetail[]
 
   @@unique([academicYear, semester])
+}
+
+model TAManpowerDetail {
+  id           String     @id @default(cuid())
+  manpowerId   String
+  manpower     TAManpower @relation(fields: [manpowerId], references: [id], onDelete: Cascade)
+  courseCode   String
+  weeklyHours  Float      @default(0)
+  duties       String?
+  skills       String?
+
+  @@unique([manpowerId, courseCode])
 }
 
 model WeeklyHour {
