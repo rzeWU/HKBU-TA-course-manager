@@ -148,13 +148,16 @@ export default function AdminCoursesPage() {
       <div className="bg-white border rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-start text-xs">
         <div>
           <span className="font-medium text-gray-600 mr-2">Year:</span>
-          {["2022-2023","2023-2024","2024-2025","2025-2026","2026-2027"].map((y) => (
-            <label key={y} className="inline-flex items-center gap-1 mr-2 cursor-pointer">
-              <input type="checkbox" checked={selectedYears.has(y)} onChange={() => toggleYear(y)}
-                className="rounded" />
-              <span className={selectedYears.has(y) ? "text-blue-700 font-medium" : "text-gray-400"}>{y.split("-")[0]}</span>
-            </label>
-          ))}
+          {["2022","2023","2024","2025","2026"].map((yShort) => {
+            const y = `${yShort}-${parseInt(yShort)+1}`;
+            return (
+              <label key={y} className="inline-flex items-center gap-1 mr-2 cursor-pointer">
+                <input type="checkbox" checked={selectedYears.has(y)} onChange={() => toggleYear(y)}
+                  className="rounded" />
+                <span className={selectedYears.has(y) ? "text-blue-700 font-medium" : "text-gray-400"}>{yShort}</span>
+              </label>
+            );
+          })}
         </div>
         <div className="border-l pl-4">
           <span className="font-medium text-gray-600 mr-2">Semester:</span>
