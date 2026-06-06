@@ -68,6 +68,15 @@ export default function AdminCoursesPage() {
     fetchCourses();
   };
 
+  const handleDelete = async (code: string) => {
+    await fetch("/api/courses", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, isActive: false }),
+    });
+    fetchCourses();
+  };
+
   const getProgramName = (slug: string) => PROGRAMS.find((p) => p.slug === slug)?.name || slug;
 
   return (
@@ -123,7 +132,7 @@ export default function AdminCoursesPage() {
               <th className="text-left px-4 py-2">Program</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Switch</th>
-              <th className="text-left px-4 py-2"></th>
+              <th className="text-left px-4 py-2">Del</th>
             </tr>
           </thead>
           <tbody>
@@ -154,9 +163,12 @@ export default function AdminCoursesPage() {
                     {c.isActive ? "Deactivate" : "Activate"}
                   </button>
                 </td>
+                <td className="px-4 py-2">
+                  <button onClick={() => handleDelete(c.code)} className="text-red-500 text-xs hover:text-red-700">Del</button>
+                </td>
               </tr>
             ))}
-            {courses.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">{loading ? "Loading..." : "No courses"}</td></tr>}
+            {courses.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">{loading ? "Loading..." : "No courses"}</td></tr>}
           </tbody>
         </table>
       </div>
