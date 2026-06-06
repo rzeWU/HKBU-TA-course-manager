@@ -45,3 +45,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const { code } = body;
+    await prisma.course.delete({ where: { code: code.toUpperCase() } });
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to delete";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

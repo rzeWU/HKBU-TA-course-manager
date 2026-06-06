@@ -69,12 +69,13 @@ export default function AdminCoursesPage() {
   };
 
   const handleDelete = async (code: string) => {
-    await fetch("/api/courses", {
-      method: "PATCH",
+    if (!confirm(`Delete course ${code}?`)) return;
+    const res = await fetch("/api/courses", {
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, isActive: false }),
+      body: JSON.stringify({ code }),
     });
-    fetchCourses();
+    if (res.ok) fetchCourses();
   };
 
   const getProgramName = (slug: string) => PROGRAMS.find((p) => p.slug === slug)?.name || slug;
