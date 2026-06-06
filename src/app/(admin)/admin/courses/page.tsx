@@ -17,12 +17,41 @@ export default function AdminCoursesPage() {
   const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set());
   const [selectedSems, setSelectedSems] = useState<Set<string>>(new Set(["Semester 1", "Semester 2", "Summer Term"]));
 
+  // Course year+semester data
+  const [courseSemData, setCourseSemData] = useState<Record<string, Set<string>>>({});
+
   useEffect(() => { fetchCourses(); }, []);
 
   const fetchCourses = async () => {
     setLoading(true);
     const res = await fetch("/api/courses");
-    setCourses(await res.json());
+    const allCourses: CourseRecord[] = await res.json();
+
+    // Fetch manpower + grade data for each course to build course->semester mapping
+    const semMap: Record<string, Set<string>> = {};
+    await Promise.all(allCourses.map(async (c) => {
+      const keys = new Set<string>();
+      try {
+        const [gradeRes, mpRes] = await Promise.all([
+          fetch(`/api/courses/${c.code}/assessments`),
+          fetch(`/api/manpower`),
+        ]);
+        const assessments: Array<{ academicYear: { yearLabel: string; semester: string } }> = await gradeRes.json();
+        const manpower: Array<{ academicYear: string; semester: string; details: Array<{ courseCode: string }> }> = await mpRes.json();
+
+        for (const a of assessments) {
+          keys.add(`${a.academicYear.yearLabel}|${a.academicYear.semester}`);
+        }
+        for (const m of manpower) {
+          if (m.details.some((d) => d.courseCode === c.code)) {
+            keys.add(`${m.academicYear}|${m.semester}`);
+          }
+        }
+      } catch {}
+      semMap[c.code] = keys;
+    }));
+    setCourseSemData(semMap);
+    setCourses(allCourses);
     setLoading(false);
   };
 
@@ -156,7 +185,20 @@ export default function AdminCoursesPage() {
             </tr>
           </thead>
           <tbody>
-            {courses.map((c) => (
+            {courses.filter((c) => {
+              // If no year filters selected, show all
+              if (selectedYears.size === 0 && selectedSems.size === 3) return true;
+              const keys = courseSemData[c.code];
+              if (!keys || keys.size === 0) return selectedYears.size === 0; // No semester data → show only if no year filter
+              // Check if any key matches
+              for (const key of keys) {
+                const [y, s] = key.split("|");
+                const yearMatch = selectedYears.size === 0 || selectedYears.has(y);
+                const semMatch = selectedSems.has(s);
+                if (yearMatch && semMatch) return true;
+              }
+              return false;
+            }).map((c) => (
               <tr key={c.id} className="border-b last:border-0">
                 <td className="px-4 py-2 font-medium">{c.code}</td>
                 <td className="px-4 py-2 text-gray-600">{c.name}</td>
