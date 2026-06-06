@@ -91,3 +91,14 @@ model CourseFile {
   fileSize     Int
   createdAt    DateTime @default(now())
 }
+
+model TAManpower {
+  id           String   @id @default(cuid())
+  title        String
+  academicYear String
+  semester     String
+  fileUrl      String
+  fileSize     Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

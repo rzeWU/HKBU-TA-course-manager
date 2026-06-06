@@ -17,22 +17,26 @@ export default async function AdminDashboard() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
 
-      <div className="grid gap-4 md:grid-cols-4 mb-10">
-        <Link href="/admin/upload" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
-          <h3 className="font-semibold text-base mb-1">Upload Grades</h3>
-          <p className="text-sm text-gray-500">Parse .ods files</p>
+      <div className="grid gap-4 md:grid-cols-5 mb-10">
+        <Link href="/admin/upload" className="p-4 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-sm mb-1">Upload Grades</h3>
+          <p className="text-xs text-gray-500">Parse .ods files</p>
         </Link>
-        <Link href="/admin/courses" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
-          <h3 className="font-semibold text-base mb-1">Manage Courses</h3>
-          <p className="text-sm text-gray-500">Add/remove courses</p>
+        <Link href="/admin/courses" className="p-4 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-sm mb-1">Courses</h3>
+          <p className="text-xs text-gray-500">Add/remove</p>
         </Link>
-        <Link href="/admin/files" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
-          <h3 className="font-semibold text-base mb-1">Manage Files</h3>
-          <p className="text-sm text-gray-500">Upload exam files</p>
+        <Link href="/admin/files" className="p-4 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-sm mb-1">Files</h3>
+          <p className="text-xs text-gray-500">Upload exams</p>
         </Link>
-        <Link href="/admin/notes" className="p-5 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
-          <h3 className="font-semibold text-base mb-1">Manage Notes</h3>
-          <p className="text-sm text-gray-500">Document changes</p>
+        <Link href="/admin/notes" className="p-4 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
+          <h3 className="font-semibold text-sm mb-1">Notes</h3>
+          <p className="text-xs text-gray-500">Changes</p>
+        </Link>
+        <Link href="/admin/manpower" className="p-4 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition border-l-4 border-l-hkbu-gold">
+          <h3 className="font-semibold text-sm mb-1">TA Manpower</h3>
+          <p className="text-xs text-gray-500">TA assignments</p>
         </Link>
       </div>
 

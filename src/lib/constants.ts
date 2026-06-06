@@ -20,4 +20,4 @@ export const FILE_KINDS = [
   "Criteria", "Question Paper", "Grade Sheet", "Solution", "Other",
 ];
 
-export const SEMESTERS = ["Semester 1", "Semester 2"];
+export const SEMESTERS = ["Semester 1", "Semester 2", "Summer Term"];
