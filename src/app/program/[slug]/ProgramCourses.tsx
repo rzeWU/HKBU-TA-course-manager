@@ -13,9 +13,10 @@ const ALL_SEMS = ["Semester 1", "Semester 2", "Summer Term"];
 const SEM_SHORT: Record<string, string> = { "Semester 1": "S1", "Semester 2": "S2", "Summer Term": "ST" };
 
 export function ProgramCourses({
-  courses, years, semesters,
+  courses, years, semesters, manpowerMap,
 }: {
   courses: Course[]; years: string[]; semesters: Array<{ year: string; sem: string }>;
+  manpowerMap: Record<string, Set<string>>;
 }) {
   const [activeYear, setActiveYear] = useState(years[0] || "");
   const [activeSem, setActiveSem] = useState<string | null>(null);
@@ -30,9 +31,11 @@ export function ProgramCourses({
   const effectiveSem = activeSem || yearSems.find((s) => s.has)?.sem || "";
   const displayYear = activeYear || years[0] || "";
 
-  // Filter courses active in selected year+semester
+  // Filter courses: grade data OR manpower data for selected year+semester
+  const filterKey = `${displayYear}|${effectiveSem}`;
   const filteredCourses = courses.filter((c) =>
-    c.academicYears.some((ay) => ay.yearLabel === displayYear && ay.semester === effectiveSem)
+    c.academicYears.some((ay) => ay.yearLabel === displayYear && ay.semester === effectiveSem) ||
+    manpowerMap[c.code]?.has(filterKey)
   );
 
   return (
@@ -69,7 +72,11 @@ export function ProgramCourses({
                 <div className="text-lg font-bold">{ys.label}</div>
                 <div className="text-[10px] mt-0.5">
                   {ys.has
-                    ? `${courses.filter((c) => c.academicYears.some((a) => a.yearLabel === activeYear && a.semester === ys.sem)).length} course(s)`
+                    ? `${courses.filter((c) => {
+                      const key = `${activeYear}|${ys.sem}`;
+                      return c.academicYears.some((a) => a.yearLabel === activeYear && a.semester === ys.sem) ||
+                        manpowerMap[c.code]?.has(key);
+                    }).length} course(s)`
                     : "No data"}
                 </div>
               </button>
