@@ -44,8 +44,23 @@ export async function POST(request: Request) {
       data: { title, academicYear, semester, fileUrl: blob.url, fileSize: file.size },
     });
 
-    // Auto-create details from parsed data
+    // Auto-create courses and details from parsed data
     if (parsedDetails.length > 0) {
+      for (const d of parsedDetails) {
+        // Auto-create course if not exists
+        await prisma.course.upsert({
+          where: { code: d.courseCode },
+          update: {},
+          create: {
+            code: d.courseCode,
+            name: d.courseCode,
+            programSlug: "mscdabe",
+            description: null,
+            courseUrl: null,
+          },
+        });
+      }
+
       await prisma.tAManpowerDetail.createMany({
         data: parsedDetails.map((d) => ({
           manpowerId: record.id,
