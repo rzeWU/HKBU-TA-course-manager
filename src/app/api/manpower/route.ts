@@ -5,6 +5,7 @@ import { parseManpowerFile, type ParsedCourseAssignment } from "@/lib/manpower-p
 
 export async function GET() {
   const records = await prisma.tAManpower.findMany({
+    include: { details: { select: { courseCode: true } } },
     orderBy: [{ academicYear: "desc" }, { semester: "asc" }],
   });
   return NextResponse.json(records);

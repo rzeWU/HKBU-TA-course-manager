@@ -24,32 +24,21 @@ export default function AdminCoursesPage() {
 
   const fetchCourses = async () => {
     setLoading(true);
-    const res = await fetch("/api/courses");
-    const allCourses: CourseRecord[] = await res.json();
+    const [courseRes, mpRes] = await Promise.all([
+      fetch("/api/courses"),
+      fetch("/api/manpower"),
+    ]);
+    const allCourses: CourseRecord[] = await courseRes.json();
+    const manpower: Array<{ academicYear: string; semester: string; details: Array<{ courseCode: string }> }> = await mpRes.json();
 
-    // Fetch manpower + grade data for each course to build course->semester mapping
+    // Build course->semester mapping from manpower data
     const semMap: Record<string, Set<string>> = {};
-    await Promise.all(allCourses.map(async (c) => {
-      const keys = new Set<string>();
-      try {
-        const [gradeRes, mpRes] = await Promise.all([
-          fetch(`/api/courses/${c.code}/assessments`),
-          fetch(`/api/manpower`),
-        ]);
-        const assessments: Array<{ academicYear: { yearLabel: string; semester: string } }> = await gradeRes.json();
-        const manpower: Array<{ academicYear: string; semester: string; details: Array<{ courseCode: string }> }> = await mpRes.json();
-
-        for (const a of assessments) {
-          keys.add(`${a.academicYear.yearLabel}|${a.academicYear.semester}`);
-        }
-        for (const m of manpower) {
-          if (m.details.some((d) => d.courseCode === c.code)) {
-            keys.add(`${m.academicYear}|${m.semester}`);
-          }
-        }
-      } catch {}
-      semMap[c.code] = keys;
-    }));
+    for (const m of manpower) {
+      for (const d of (m.details || [])) {
+        if (!semMap[d.courseCode]) semMap[d.courseCode] = new Set();
+        semMap[d.courseCode].add(`${m.academicYear}|${m.semester}`);
+      }
+    }
     setCourseSemData(semMap);
     setCourses(allCourses);
     setLoading(false);
