@@ -34,7 +34,7 @@ export async function POST(
     const blob = await put(
       `courses/${code}/${academicYear}/${semester}/${fileKind}/${file.name}`,
       file,
-      { access: "public" }
+      { access: "public", allowOverwrite: true }
     );
 
     // Save file record

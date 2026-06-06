@@ -17,6 +17,8 @@ export default function AdminCoursesPage() {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [programSlug, setProgramSlug] = useState(PROGRAMS[0].slug);
+  const [description, setDescription] = useState("");
+  const [courseUrl, setCourseUrl] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +38,7 @@ export default function AdminCoursesPage() {
     const res = await fetch("/api/courses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: code.toUpperCase(), name, programSlug }),
+      body: JSON.stringify({ code: code.toUpperCase(), name, programSlug, description, courseUrl }),
     });
     if (res.ok) {
       setMessage("Course added!");
@@ -77,7 +79,7 @@ export default function AdminCoursesPage() {
 
       <form onSubmit={handleAdd} className="bg-white border rounded-xl p-5 mb-6 space-y-3">
         <h2 className="font-semibold text-sm">Add Course</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-gray-600">Course Code</label>
             <input type="text" value={code} onChange={(e) => setCode(e.target.value)}
@@ -95,6 +97,17 @@ export default function AdminCoursesPage() {
               {PROGRAMS.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}
             </select>
           </div>
+          <div>
+            <label className="text-xs text-gray-600">Course URL</label>
+            <input type="text" value={courseUrl} onChange={(e) => setCourseUrl(e.target.value)}
+              placeholder="https://mscdabe.hkbu.edu.hk/..." className="w-full px-2 py-1.5 border rounded text-xs" />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">Description</label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief course description..." rows={2}
+            className="w-full px-2 py-1.5 border rounded text-xs" />
         </div>
         <div className="flex items-center gap-3">
           <button type="submit" className="px-4 py-1.5 bg-hkbu-navy text-white rounded text-sm hover:bg-hkbu-accent">Add Course</button>

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const blob = await put(
       `manpower/${academicYear}/${semester}/${file.name}`,
       file,
-      { access: "public" }
+      { access: "public", allowOverwrite: true }
     );
 
     // Upsert: delete existing for same year+semester, then create

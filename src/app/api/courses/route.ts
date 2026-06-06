@@ -9,7 +9,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { code, name, programSlug } = body;
+    const { code, name, programSlug, description, courseUrl } = body;
     if (!code || !name) {
       return NextResponse.json(
         { error: "code and name are required" },
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
     const course = await prisma.course.create({
-      data: { code: code.toUpperCase(), name, programSlug: programSlug || "mscdabe" },
+      data: { code: code.toUpperCase(), name, programSlug: programSlug || "mscdabe", description: description || null, courseUrl: courseUrl || null },
     });
     return NextResponse.json(course, { status: 201 });
   } catch (error: unknown) {

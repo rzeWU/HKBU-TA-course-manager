@@ -18,12 +18,11 @@ export default async function ProgramPage({
       programSlug: slug,
       isActive: true,
     },
-    include: {
+    select: {
+      id: true, code: true, name: true, description: true, courseUrl: true, programSlug: true,
       academicYears: {
         include: {
-          assessments: {
-            select: { type: true, meanScore: true, medianScore: true, studentCount: true },
-          },
+          assessments: { select: { type: true, meanScore: true, medianScore: true, studentCount: true } },
         },
         orderBy: { yearLabel: "desc" },
       },
@@ -52,54 +51,46 @@ export default async function ProgramPage({
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
-          {courses.map((course) => {
-            const latestYear = course.academicYears[0];
-            const assessments = latestYear?.assessments ?? [];
-            return (
-              <Link
-                key={course.id}
-                href={`/course/${course.code}`}
-                className="block bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-hkbu-navy/30 transition-all group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900 group-hover:text-hkbu-navy transition-colors">
-                      {course.code}
-                    </h2>
-                    {latestYear && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Latest: {latestYear.yearLabel} · {latestYear.semester}
-                      </p>
-                    )}
-                  </div>
-                  <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 font-medium">
-                    Active
-                  </span>
-                </div>
-
-                {assessments.length > 0 ? (
-                  <div className="space-y-2">
-                    {assessments.map((a) => (
-                      <div key={a.type} className="flex justify-between text-sm">
-                        <span className="text-gray-600">{a.type}</span>
-                        <span className="text-gray-900 font-medium tabular-nums">
-                          μ {a.meanScore.toFixed(1)} · m {a.medianScore.toFixed(1)} · n={a.studentCount}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400">No grades uploaded yet</p>
+          {courses.map((course) => (
+            <div
+              key={course.id}
+              className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-hkbu-navy/30 transition-all"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <Link href={`/course/${course.code}`}>
+                  <h2 className="text-lg font-semibold text-hkbu-navy hover:text-hkbu-accent transition-colors">
+                    {course.code}
+                  </h2>
+                </Link>
+              </div>
+              <h3 className="text-sm font-medium text-gray-800 mb-2">{course.name}</h3>
+              {course.description ? (
+                <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mb-4">
+                  {course.description}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-400 italic mb-4">No description available</p>
+              )}
+              <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                <Link
+                  href={`/course/${course.code}`}
+                  className="text-xs text-hkbu-accent hover:underline font-medium"
+                >
+                  View TA records →
+                </Link>
+                {course.courseUrl && (
+                  <a
+                    href={course.courseUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-hkbu-gold hover:underline font-medium"
+                  >
+                    Learn More ↗
+                  </a>
                 )}
-
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  <span className="text-xs text-hkbu-accent group-hover:underline">
-                    View course details →
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
