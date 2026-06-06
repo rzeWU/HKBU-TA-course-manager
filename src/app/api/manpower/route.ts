@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { put } from "@vercel/blob";
-import { parseManpowerFile } from "@/lib/manpower-parser";
+import { parseManpowerFile, type ParsedCourseAssignment } from "@/lib/manpower-parser";
 
 export async function GET() {
   const records = await prisma.tAManpower.findMany({
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     );
 
     // Parse the file for TA assignments (Wu Ruize)
-    let parsedDetails: Array<{ courseCode: string; weeklyHours: number; duties: string | null; skills: string | null }> = [];
+    let parsedDetails: ParsedCourseAssignment[] = [];
     try {
       const buffer = await file.arrayBuffer();
       parsedDetails = parseManpowerFile(buffer);
@@ -50,10 +50,10 @@ export async function POST(request: Request) {
         // Auto-create course if not exists
         await prisma.course.upsert({
           where: { code: d.courseCode },
-          update: {},
+          update: { name: d.courseName || d.courseCode },
           create: {
             code: d.courseCode,
-            name: d.courseCode,
+            name: d.courseName || d.courseCode,
             programSlug: "mscdabe",
             description: null,
             courseUrl: null,

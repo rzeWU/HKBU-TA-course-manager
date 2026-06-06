@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 
 export interface ParsedCourseAssignment {
   courseCode: string;
+  courseName: string | null;
   weeklyHours: number;
   duties: string | null;
   skills: string | null;
@@ -14,12 +15,19 @@ const HOURS_KEYWORDS = ["workload", "hours", "weekly hours", "expected workload"
 const DUTIES_KEYWORDS = ["duties", "expected duties", "duty", "task", "tasks"];
 const SKILLS_KEYWORDS = ["skills", "preferred skills", "skill", "qualification"];
 
-// Extract pure course code from cell that may contain both code and name
-function extractCourseCode(raw: string): string {
+// Extract course code and name from cell like "ECON7880 Big Data Analytics"
+function extractCourseCode(raw: string): { code: string; name: string | null } {
   const cleaned = raw.trim();
   // Try to find pattern like ECON7880 or ECON 7880
   const match = cleaned.match(/[A-Za-z]{2,}\s*\d{4}/);
-  return match ? match[0].replace(/\s/g, "").toUpperCase() : cleaned.split(/[\s\-–]+/)[0].toUpperCase();
+  if (match) {
+    const code = match[0].replace(/\s/g, "").toUpperCase();
+    const remaining = cleaned.substring((match.index ?? 0) + match[0].length).trim();
+    return { code, name: remaining || null };
+  }
+  const code = cleaned.split(/[\s\-–]+/)[0].toUpperCase();
+  const name = cleaned.substring(code.length).trim() || null;
+  return { code, name };
 }
 
 function findCol(headers: string[], keywords: string[]): number {
@@ -85,7 +93,7 @@ export function parseManpowerFile(buffer: ArrayBuffer): ParsedCourseAssignment[]
       if (!ta.includes(TA_NAME)) continue;
 
       const rawCode = courseCol >= 0 ? String(row[courseCol] ?? "").trim() : "";
-      const code = extractCourseCode(rawCode);
+      const { code, name: courseName } = extractCourseCode(rawCode);
       if (!code) continue;
 
       const hoursStr = hoursCol >= 0 ? String(row[hoursCol] ?? "").trim() : "0";
@@ -94,7 +102,7 @@ export function parseManpowerFile(buffer: ArrayBuffer): ParsedCourseAssignment[]
       const duties = dutiesCol >= 0 ? String(row[dutiesCol] ?? "").trim() || null : null;
       const skills = skillsCol >= 0 ? String(row[skillsCol] ?? "").trim() || null : null;
 
-      results.push({ courseCode: code, weeklyHours: hours, duties, skills });
+      results.push({ courseCode: code, courseName, weeklyHours: hours, duties, skills });
     }
 
     if (results.length > 0) return results;
