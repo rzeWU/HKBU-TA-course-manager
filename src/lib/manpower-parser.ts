@@ -14,6 +14,14 @@ const HOURS_KEYWORDS = ["workload", "hours", "weekly hours", "expected workload"
 const DUTIES_KEYWORDS = ["duties", "expected duties", "duty", "task", "tasks"];
 const SKILLS_KEYWORDS = ["skills", "preferred skills", "skill", "qualification"];
 
+// Extract pure course code from cell that may contain both code and name
+function extractCourseCode(raw: string): string {
+  const cleaned = raw.trim();
+  // Try to find pattern like ECON7880 or ECON 7880
+  const match = cleaned.match(/[A-Za-z]{2,}\s*\d{4}/);
+  return match ? match[0].replace(/\s/g, "").toUpperCase() : cleaned.split(/[\s\-–]+/)[0].toUpperCase();
+}
+
 function findCol(headers: string[], keywords: string[]): number {
   for (const kw of keywords) {
     const idx = headers.findIndex((h) => h.toLowerCase().trim().includes(kw));
@@ -76,7 +84,8 @@ export function parseManpowerFile(buffer: ArrayBuffer): ParsedCourseAssignment[]
       const ta = String(row[taCol] ?? "").trim().toLowerCase();
       if (!ta.includes(TA_NAME)) continue;
 
-      const code = courseCol >= 0 ? String(row[courseCol] ?? "").trim().toUpperCase() : "";
+      const rawCode = courseCol >= 0 ? String(row[courseCol] ?? "").trim() : "";
+      const code = extractCourseCode(rawCode);
       if (!code) continue;
 
       const hoursStr = hoursCol >= 0 ? String(row[hoursCol] ?? "").trim() : "0";
