@@ -16,8 +16,10 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const course = await prisma.course.create({
-      data: { code: code.toUpperCase(), name, programSlug: programSlug || "mscdabe", description: description || null, courseUrl: courseUrl || null },
+    const course = await prisma.course.upsert({
+      where: { code: code.toUpperCase() },
+      update: { name, programSlug: programSlug || "mscdabe", description: description || null, courseUrl: courseUrl || null },
+      create: { code: code.toUpperCase(), name, programSlug: programSlug || "mscdabe", description: description || null, courseUrl: courseUrl || null },
     });
     return NextResponse.json(course, { status: 201 });
   } catch (error: unknown) {
