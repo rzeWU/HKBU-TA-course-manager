@@ -30,6 +30,10 @@ export async function POST(request: Request) {
       { access: "public" }
     );
 
+    // Upsert: delete existing for same year+semester, then create
+    await prisma.tAManpower.deleteMany({
+      where: { academicYear, semester },
+    });
     const record = await prisma.tAManpower.create({
       data: {
         title,

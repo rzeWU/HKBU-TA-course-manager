@@ -101,4 +101,16 @@ model TAManpower {
   fileSize     Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([academicYear, semester])
+}
+
+model WeeklyHour {
+  id           String   @id @default(cuid())
+  academicYear String
+  semester     String
+  hours        Float
+  updatedAt    DateTime @updatedAt
+
+  @@unique([academicYear, semester])
 }

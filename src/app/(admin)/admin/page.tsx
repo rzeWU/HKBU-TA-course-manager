@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { ASSESSMENT_ORDER, ASSESSMENT_ABBREV } from "@/lib/constants";
+import { WorkloadChart } from "./WorkloadChart";
+import { WeekHoursInput } from "./WeekHoursInput";
 
 export default async function AdminDashboard() {
   const courses = await prisma.course.findMany({
+    where: { isActive: true },
     include: {
       academicYears: {
         include: { assessments: { select: { type: true } } },
@@ -13,10 +15,41 @@ export default async function AdminDashboard() {
     orderBy: { code: "asc" },
   });
 
+  const hoursRecords = await prisma.weeklyHour.findMany({
+    orderBy: [{ academicYear: "asc" }, { semester: "asc" }],
+  });
+
+  // Calculate stats
+  const allYearSemesters = courses.flatMap((c) =>
+    c.academicYears.map((y) => ({ code: c.code, year: y.yearLabel, sem: y.semester }))
+  );
+  const uniqueYearSems = [
+    ...new Map(
+      allYearSemesters.map((x) => [`${x.year}|${x.sem}`, x])
+    ).values(),
+  ].sort((a, b) => a.year.localeCompare(b.year) || a.sem.localeCompare(b.sem));
+
+  // Repeated courses: taught in more than 1 academic year
+  const courseYearCounts: Record<string, number> = {};
+  for (const ys of allYearSemesters) {
+    courseYearCounts[ys.code] = (courseYearCounts[ys.code] || 0) + 1;
+  }
+  const repeatedCourses = Object.entries(courseYearCounts).filter(
+    ([, c]) => c > 1
+  );
+
+  // Hours chart data
+  const semColors: Record<string, string> = {
+    "Semester 1": "rgb(59,130,246)",
+    "Semester 2": "rgb(16,185,129)",
+    "Summer Term": "rgb(245,158,11)",
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
 
+      {/* Quick links */}
       <div className="grid gap-4 md:grid-cols-5 mb-10">
         <Link href="/admin/upload" className="p-4 bg-white border rounded-xl hover:shadow-md hover:border-blue-300 transition">
           <h3 className="font-semibold text-sm mb-1">Upload Grades</h3>
@@ -40,124 +73,109 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      <h2 className="text-lg font-semibold mb-4">Courses</h2>
-      <div className="space-y-4">
-        {courses.map((course) => {
-          const years = course.academicYears;
-          const allAssessmentTypes = [
-            ...new Set(years.flatMap((y) => y.assessments.map((a) => a.type))),
-          ].sort((a, b) => (ASSESSMENT_ORDER[a] ?? 99) - (ASSESSMENT_ORDER[b] ?? 99));
+      {/* Stats cards */}
+      <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <div className="bg-white border rounded-xl p-5">
+          <p className="text-xs text-gray-500 mb-1">Active Courses</p>
+          <p className="text-2xl font-bold text-hkbu-navy">{courses.length}</p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {courses.map((c) => (
+              <span key={c.code} className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
+                {c.code}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white border rounded-xl p-5">
+          <p className="text-xs text-gray-500 mb-1">Repeated Courses</p>
+          <p className="text-2xl font-bold text-hkbu-navy">{repeatedCourses.length}</p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {repeatedCourses.map(([code, c]) => (
+              <span key={code} className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded">
+                {code} ×{c}
+              </span>
+            ))}
+            {repeatedCourses.length === 0 && (
+              <span className="text-xs text-gray-400">No repeated courses yet</span>
+            )}
+          </div>
+        </div>
+        <div className="bg-white border rounded-xl p-5">
+          <p className="text-xs text-gray-500 mb-1">Teaching Semesters</p>
+          <p className="text-2xl font-bold text-hkbu-navy">{uniqueYearSems.length}</p>
+          <div className="mt-2 space-y-0.5">
+            {uniqueYearSems.slice(-4).map((ys, i) => (
+              <div key={i} className="text-xs text-gray-600">
+                {ys.year.split("-")[0]} {ys.sem}
+              </div>
+            ))}
+            {uniqueYearSems.length > 4 && (
+              <div className="text-xs text-gray-400">+{uniqueYearSems.length - 4} more</div>
+            )}
+          </div>
+        </div>
+      </div>
 
-          if (allAssessmentTypes.length === 0) {
-            Object.keys(ASSESSMENT_ORDER).forEach((t) => {
-              if (!allAssessmentTypes.includes(t)) allAssessmentTypes.push(t);
-            });
-          }
+      {/* Weekly Hours + Chart */}
+      <div className="grid gap-6 md:grid-cols-2 mb-8">
+        <div className="bg-white border rounded-xl p-5">
+          <h3 className="font-semibold text-sm text-gray-700 mb-4">
+            Weekly Work Hours
+          </h3>
+          <WeekHoursInput
+            existingHours={hoursRecords.map((h) => ({
+              year: h.academicYear,
+              sem: h.semester,
+              hours: h.hours,
+            }))}
+          />
+        </div>
+        <div className="bg-white border rounded-xl p-5">
+          <h3 className="font-semibold text-sm text-gray-700 mb-4">
+            Hours Trend
+          </h3>
+          <WorkloadChart records={hoursRecords.map((h) => ({
+            year: h.academicYear.split("-")[0],
+            fullYear: h.academicYear,
+            semester: h.semester,
+            hours: h.hours,
+          }))} />
+        </div>
+      </div>
 
-          return (
-            <div key={course.id} className="bg-white border rounded-xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{course.code}</h3>
-                  <p className="text-xs text-gray-500">{course.name}</p>
-                </div>
-                <Link
-                  href={`/course/${course.code}`}
-                  className="text-xs text-blue-600 hover:underline"
+      {/* Teaching record per year/semester */}
+      <div className="bg-white border rounded-xl p-5">
+        <h3 className="font-semibold text-sm text-gray-700 mb-4">
+          Teaching Record
+        </h3>
+        {uniqueYearSems.length === 0 ? (
+          <p className="text-sm text-gray-400">No teaching record yet. Upload grades to populate.</p>
+        ) : (
+          <div className="grid gap-2">
+            {uniqueYearSems.map((ys, i) => {
+              const h = hoursRecords.find(
+                (r) => r.academicYear === ys.year && r.semester === ys.sem
+              );
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg text-sm"
                 >
-                  View course →
-                </Link>
-              </div>
-
-              {/* Academic Years */}
-              <div className="mb-3">
-                {(() => {
-                const uniqueYears = [...new Set(years.map((y) => y.yearLabel))].sort();
-                return (
-                  <>
-                    <span className="text-xs font-medium text-gray-500 mr-2">{uniqueYears.length} years:</span>
-                    {uniqueYears.length === 0 ? (
-                      <span className="text-xs text-gray-400">—</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {uniqueYears.map((yl) => {
-                          const hasS1 = years.some((ay) => ay.yearLabel === yl && ay.semester === "Semester 1");
-                          const hasS2 = years.some((ay) => ay.yearLabel === yl && ay.semester === "Semester 2");
-                          return (
-                            <span key={yl} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                              <span className="font-medium">{yl.split("-")[0]}</span>
-                              <span className="text-gray-500 ml-1">
-                                S1{hasS2 ? " S2" : ""}
-                              </span>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-              </div>
-
-              {/* Assessments per year */}
-              <div>
-                <span className="text-xs font-medium text-gray-500 mr-2">Assessments:</span>
-                {years.length === 0 ? (
-                  <span className="text-xs text-gray-400">—</span>
-                ) : (
-                  <div className="overflow-x-auto mt-1">
-                    <table className="text-xs w-full">
-                      <thead>
-                        <tr className="text-gray-500">
-                          <th className="text-left pr-3 py-1 font-medium">Year</th>
-                          {allAssessmentTypes.map((t) => (
-                            <th key={t} className="text-center px-2 py-1 font-medium">
-                              {ASSESSMENT_ABBREV[t] || t}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {years.map((y) => {
-                          const yearTypes = y.assessments.map((a) => a.type);
-                          return (
-                            <tr key={y.id} className="border-t border-gray-100">
-                              <td className="pr-3 py-1 text-gray-600">
-                                {y.yearLabel.split("-")[0]} {y.semester.replace("Semester ", "S")}
-                              </td>
-                              {allAssessmentTypes.map((t) => {
-                                const has = yearTypes.includes(t);
-                                return (
-                                  <td key={t} className="text-center px-2 py-1">
-                                    <span
-                                      className={
-                                        has
-                                          ? "text-green-600 font-medium"
-                                          : "text-gray-300"
-                                      }
-                                    >
-                                      {has ? "✓" : "—"}
-                                    </span>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-gray-700">
+                      {ys.year.split("-")[0]} {ys.sem.replace("Semester ", "S")}
+                    </span>
+                    <span className="text-gray-500">
+                      {ys.code}
+                    </span>
                   </div>
-                )}
-              </div>
-
-              <div className="mt-3 text-right text-xs text-gray-400">
-                Updated {course.updatedAt.toLocaleDateString()}
-              </div>
-            </div>
-          );
-        })}
-        {courses.length === 0 && (
-          <div className="text-center py-12 text-gray-400">No courses yet.</div>
+                  <span className="text-xs text-gray-400">
+                    {h ? `${h.hours}h/week` : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
