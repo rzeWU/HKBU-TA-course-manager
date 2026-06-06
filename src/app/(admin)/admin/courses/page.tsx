@@ -120,7 +120,6 @@ export default function AdminCoursesPage() {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-2">Code</th>
-              <th className="text-left px-4 py-2">Name</th>
               <th className="text-left px-4 py-2">Program</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Switch</th>
@@ -131,7 +130,6 @@ export default function AdminCoursesPage() {
             {courses.map((c) => (
               <tr key={c.id} className="border-b last:border-0">
                 <td className="px-4 py-2 font-medium">{c.code}</td>
-                <td className="px-4 py-2 text-gray-600">{c.name}</td>
                 <td className="px-4 py-2">
                   <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{getProgramName(c.programSlug)}</span>
                 </td>
@@ -158,7 +156,7 @@ export default function AdminCoursesPage() {
                 </td>
               </tr>
             ))}
-            {courses.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">{loading ? "Loading..." : "No courses"}</td></tr>}
+            {courses.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">{loading ? "Loading..." : "No courses"}</td></tr>}
           </tbody>
         </table>
       </div>
