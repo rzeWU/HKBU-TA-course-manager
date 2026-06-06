@@ -45,6 +45,19 @@ export async function POST(
       );
     }
 
+    // Guard: files must exist for this assessment type before uploading grades
+    const fileCount = await prisma.courseFile.count({
+      where: { courseId: course.id, type },
+    });
+    if (fileCount === 0) {
+      return NextResponse.json(
+        {
+          error: `No files uploaded for "${type}". Please upload question paper / criteria files via Manage Files first.`,
+        },
+        { status: 400 }
+      );
+    }
+
     // Find or create academic year
     let ay = await prisma.academicYear.findUnique({
       where: {
