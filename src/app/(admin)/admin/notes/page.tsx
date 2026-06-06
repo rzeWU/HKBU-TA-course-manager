@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ASSESSMENT_TYPES } from "@/lib/constants";
 
-const COURSES = ["ECON7880", "ECON3105"];
-
 interface NoteRecord {
   id: string;
   assessmentType: string;
@@ -15,7 +13,8 @@ interface NoteRecord {
 }
 
 export default function AdminNotesPage() {
-  const [course, setCourse] = useState(COURSES[0]);
+  const [courses, setCourses] = useState<string[]>([]);
+  const [course, setCourse] = useState("");
   const [notes, setNotes] = useState<NoteRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [assessmentType, setAssessmentType] = useState<string>(ASSESSMENT_TYPES[0]);
@@ -24,7 +23,15 @@ export default function AdminNotesPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetchNotes();
+    fetch("/api/courses").then(r => r.json()).then((data: Array<{ code: string }>) => {
+      const codes = data.map(c => c.code);
+      setCourses(codes);
+      if (codes.length > 0 && !course) setCourse(codes[0]);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (course) fetchNotes();
   }, [course]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchNotes = async () => {
@@ -87,7 +94,7 @@ export default function AdminNotesPage() {
           onChange={(e) => setCourse(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg"
         >
-          {COURSES.map((c) => (
+          {courses.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>

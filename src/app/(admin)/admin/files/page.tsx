@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { ASSESSMENT_TYPES, FILE_KINDS, SEMESTERS } from "@/lib/constants";
 
-const COURSES = ["ECON7880", "ECON3105"];
-
 interface FileRecord {
   id: string;
   name: string;
@@ -19,7 +17,8 @@ interface FileRecord {
 }
 
 export default function AdminFilesPage() {
-  const [course, setCourse] = useState(COURSES[0]);
+  const [courses, setCourses] = useState<string[]>([]);
+  const [course, setCourse] = useState("");
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [yearLabel, setYearLabel] = useState("2025-2026");
@@ -31,7 +30,17 @@ export default function AdminFilesPage() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { fetchFiles(); }, [course]);
+  useEffect(() => {
+    fetch("/api/courses").then(r => r.json()).then((data: Array<{ code: string }>) => {
+      const codes = data.map(c => c.code);
+      setCourses(codes);
+      if (codes.length > 0 && !course) setCourse(codes[0]);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (course) fetchFiles();
+  }, [course]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -91,7 +100,7 @@ export default function AdminFilesPage() {
         <label className="text-sm font-medium mr-2">Course:</label>
         <select value={course} onChange={(e) => setCourse(e.target.value)}
           className="px-3 py-1.5 border rounded-lg text-sm">
-          {COURSES.map((c) => <option key={c}>{c}</option>)}
+          {courses.map((c) => <option key={c}>{c}</option>)}
         </select>
       </div>
 

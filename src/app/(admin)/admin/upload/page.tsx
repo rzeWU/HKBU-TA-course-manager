@@ -1,23 +1,46 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { parseOdsFile } from "@/lib/ods-parser";
 import type { ParsedOdsData } from "@/lib/types";
 import { ASSESSMENT_TYPES, SEMESTERS } from "@/lib/constants";
 
-const COURSES = ["ECON7880", "ECON3105"];
-
 export default function AdminUploadPage() {
-  const [course, setCourse] = useState(COURSES[0]);
+  const [courses, setCourses] = useState<string[]>([]);
+  const [course, setCourse] = useState("");
   const [yearLabel, setYearLabel] = useState("2025-2026");
   const [semester, setSemester] = useState(SEMESTERS[0]);
-  const [type, setType] = useState<string>(ASSESSMENT_TYPES[0]);
+  const [type, setType] = useState("");
+  const [existingTypes, setExistingTypes] = useState<string[]>([]);
   const [parsedData, setParsedData] = useState<ParsedOdsData | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    fetch("/api/courses")
+      .then((r) => r.json())
+      .then((data: Array<{ code: string }>) => {
+        const codes = data.map((c) => c.code);
+        setCourses(codes);
+        if (codes.length > 0 && !course) setCourse(codes[0]);
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!course) return;
+    fetch(`/api/courses/${course}/assessments`)
+      .then((r) => r.json())
+      .then((data: Array<{ type: string }>) => {
+        const types = [...new Set(data.map((a) => a.type))];
+        setExistingTypes(types);
+        if (!type) setType(ASSESSMENT_TYPES[0] as string);
+      });
+  }, [course]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const allTypeSuggestions = [...new Set([...ASSESSMENT_TYPES, ...existingTypes])];
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError("");
@@ -103,10 +126,8 @@ export default function AdminUploadPage() {
             onChange={(e) => setCourse(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           >
-            {COURSES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+            {courses.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
@@ -151,7 +172,7 @@ export default function AdminUploadPage() {
             placeholder="e.g. Assignment 1"
           />
           <datalist id="assessment-types">
-            {ASSESSMENT_TYPES.map((t) => (
+            {allTypeSuggestions.map((t) => (
               <option key={t} value={t} />
             ))}
           </datalist>
